@@ -26,9 +26,9 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-linear-to-r from-blue-600 to-cyan-600 text-white">
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="relative container mx-auto px-6 py-24">
           <div className="max-w-3xl">
