@@ -10,8 +10,8 @@ export default function Navbar() {
   
   const navItems = [
     { href: '/', label: 'Home', icon: <Home className="w-4 h-4" /> },
-    { href: '/map', label: 'Interactive Map', icon: <Map className="w-4 h-4" /> },
-    { href: '/data-entry', label: 'Data Management', icon: <Database className="w-4 h-4" /> },
+    { href: '/Map', label: 'Interactive Map', icon: <Map className="w-4 h-4" /> },
+    { href: '/DataEntry', label: 'Data Management', icon: <Database className="w-4 h-4" /> },
   ];
   
   return (
