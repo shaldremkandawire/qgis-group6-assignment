@@ -1,0 +1,14 @@
+
+<svg width="30" height="45" viewBox="0 0 30 45" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="pulse">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="pulse"/>
+    </filter>
+  </defs>
+  <g filter="url(#pulse)">
+    <path d="M15 1C7.8 1 2 6.8 2 14C2 21.5 15 44 15 44S28 21.5 28 14C28 6.8 22.2 1 15 1Z" 
+          fill="#EF4444" stroke="#FFFFFF" stroke-width="2"/>
+    <text x="15" y="18" text-anchor="middle" fill="#FFFFFF" font-weight="bold" font-size="12">!</text>
+  </g>
+</svg>
