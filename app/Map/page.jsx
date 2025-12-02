@@ -1,17 +1,24 @@
 "use client";
-import { MapContainer, TileLayer, GeoJSON, Marker, Popup, LayersControl, ScaleControl } from 'react-leaflet';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { Layers, Filter, Download, AlertCircle } from 'lucide-react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
-// Fix for default marker icons in Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: '/leaflet/images/marker-icon-2x.png',
-  iconUrl: '/leaflet/images/marker-icon.png',
-  shadowUrl: '/leaflet/images/marker-shadow.png',
-});
+// Dynamically import the MapComponent with no SSR
+import dynamic from 'next/dynamic';
+
+const MapComponent = dynamic(
+  () => import('./MapComponent'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading map...</p>
+        </div>
+      </div>
+    )
+  }
+);
 
 export default function MapPage() {
   const [floodZones, setFloodZones] = useState([]);
@@ -45,23 +52,6 @@ export default function MapPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getRiskColor = (risk) => {
-    switch (risk) {
-      case 'HIGH': return '#ef4444';
-      case 'MEDIUM': return '#f59e0b';
-      case 'LOW': return '#10b981';
-      default: return '#6b7280';
-    }
-  };
-
-  const getSettlementIcon = (isHighRisk) => {
-    return L.divIcon({
-      html: `<div class="w-6 h-6 rounded-full ${isHighRisk ? 'bg-red-600' : 'bg-green-600'} border-2 border-white shadow-lg"></div>`,
-      className: 'custom-marker',
-      iconSize: [24, 24]
-    });
   };
 
   const handleExportData = () => {
@@ -188,92 +178,22 @@ export default function MapPage() {
 
         {/* Map Container */}
         <div className="flex-1 relative">
-          {loading ? (
+          <Suspense fallback={
             <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 z-50">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
                 <p className="mt-4 text-gray-600">Loading spatial data...</p>
               </div>
             </div>
-          ) : null}
-          
-          <MapContainer
-            center={[-13.9, 33.7]}
-            zoom={7}
-            style={{ height: '100%', width: '100%' }}
-            scrollWheelZoom={true}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          }>
+            <MapComponent 
+              floodZones={floodZones}
+              settlements={settlements}
+              highRisk={highRisk}
+              riskFilter={riskFilter}
+              loading={loading}
             />
-            
-            <ScaleControl position="bottomleft" />
-            
-            <LayersControl position="topright">
-              <LayersControl.Overlay checked name="Flood Zones">
-                <GeoJSON
-                  data={{
-                    type: "FeatureCollection",
-                    features: floodZones
-                      .filter(zone => riskFilter === 'ALL' || zone.risk_level === riskFilter)
-                      .map(zone => ({
-                        type: "Feature",
-                        geometry: JSON.parse(zone.geometry),
-                        properties: {
-                          name: zone.zone_name,
-                          risk: zone.risk_level
-                        }
-                      }))
-                  }}
-                  style={(feature) => ({
-                    fillColor: getRiskColor(feature?.properties.risk),
-                    weight: 2,
-                    opacity: 0.7,
-                    color: getRiskColor(feature?.properties.risk),
-                    fillOpacity: 0.2
-                  })}
-                  onEachFeature={(feature, layer) => {
-                    if (feature.properties) {
-                      layer.bindPopup(`
-                        <div class="p-2">
-                          <h3 class="font-bold text-lg">${feature.properties.name}</h3>
-                          <p class="text-sm">Risk Level: <span class="font-semibold ${feature.properties.risk === 'HIGH' ? 'text-red-600' : feature.properties.risk === 'MEDIUM' ? 'text-yellow-600' : 'text-green-600'}">${feature.properties.risk}</span></p>
-                        </div>
-                      `);
-                    }
-                  }}
-                />
-              </LayersControl.Overlay>
-
-              <LayersControl.Overlay checked name="Settlements">
-                {settlements.map((settlement, index) => {
-                  const isHighRisk = highRisk.some(hr => hr.id === settlement.id);
-                  const { coordinates } = JSON.parse(settlement.geometry);
-                  
-                  return (
-                    <Marker
-                      key={index}
-                      position={[coordinates[1], coordinates[0]]}
-                      icon={getSettlementIcon(isHighRisk)}
-                    >
-                      <Popup>
-                        <div className="p-2">
-                          <h3 className="font-bold text-lg">{settlement.name}</h3>
-                          <p className="text-sm">Type: {settlement.type}</p>
-                          <p className="text-sm">Population: {settlement.population}</p>
-                          <p className="text-sm">Elevation: {settlement.elevation}m</p>
-                          <p className={`text-sm font-semibold ${isHighRisk ? 'text-red-600' : 'text-green-600'}`}>
-                            {isHighRisk ? '⚠️ IN HIGH RISK ZONE' : '✅ SAFE ZONE'}
-                          </p>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  );
-                })}
-              </LayersControl.Overlay>
-            </LayersControl>
-          </MapContainer>
+          </Suspense>
         </div>
       </div>
     </div>
